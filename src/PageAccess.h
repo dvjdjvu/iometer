@@ -60,6 +60,8 @@
 #ifndef PAGEACCESS_DEFINED
 #define PAGEACCESS_DEFINED
 
+#include "ResizablePageLayout.h"
+
 #include "GalileoApp.h"
 #include "IOTest.h"
 
@@ -83,6 +85,7 @@
 // CPageAccess dialog
 
 class CPageAccess:public CPropertyPage {
+	CResizablePageLayout m_ResizableLayout;
 	DECLARE_DYNCREATE(CPageAccess)
 // Construction
       public:
@@ -153,6 +156,7 @@ class CPageAccess:public CPropertyPage {
 
 	// Generated message map functions
 	//{{AFX_MSG(CPageAccess)
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBEdit();
 	afx_msg void OnBNew();

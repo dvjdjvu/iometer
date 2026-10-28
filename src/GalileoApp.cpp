@@ -95,6 +95,43 @@ static char THIS_FILE[] = __FILE__;
 #endif
 #endif
 
+
+static BOOL g_accessSpecPersistenceReady = FALSE;
+
+static CString GetGlobalAccessSpecPath()
+{
+	char appData[MAX_PATH];
+	DWORD length = GetEnvironmentVariable("APPDATA", appData, MAX_PATH);
+	if (length == 0 || length >= MAX_PATH)
+		return "";
+
+	CString directory(appData);
+	directory += "\\Iometer";
+	if (!CreateDirectory(directory, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
+		return "";
+
+	return directory + "\\GlobalAccessSpecifications.icf";
+}
+BOOL CGalileoApp::SaveGlobalAccessSpecifications()
+{
+	if (!g_accessSpecPersistenceReady)
+		return FALSE;
+
+	CString accessSpecPath = GetGlobalAccessSpecPath();
+	if (accessSpecPath.IsEmpty())
+		return FALSE;
+
+	ofstream outfile(accessSpecPath);
+	if (!outfile.is_open())
+		return FALSE;
+
+	CString versionHeader;
+	versionHeader.Format(IDS_VERSION_OUTPUT, (LPCTSTR)GetVersionString(TRUE));
+	outfile << (LPCTSTR)versionHeader << endl;
+	BOOL saved = access_spec_list.SaveConfig(outfile);
+	outfile.close();
+	return saved && !outfile.fail();
+}
 /////////////////////////////////////////////////////////////////////////////
 // CGalileoApp
 
@@ -175,6 +212,19 @@ BOOL CGalileoApp::InitInstance()
 	}
 #endif
 
+	// Restore the user's global access profiles independently of test/session files.
+	CString accessSpecPath = GetGlobalAccessSpecPath();
+	if (!accessSpecPath.IsEmpty()) {
+		DWORD attributes = GetFileAttributes(accessSpecPath);
+		if (attributes != INVALID_FILE_ATTRIBUTES) {
+			if (access_spec_list.LoadConfig(accessSpecPath, TRUE))
+				g_accessSpecPersistenceReady = TRUE;
+			else
+				ErrorMessage("Global access specifications could not be restored; the saved file was left untouched.");
+		} else {
+			g_accessSpecPersistenceReady = TRUE;
+		}
+	}
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views.
 
@@ -311,6 +361,8 @@ BOOL CGalileoApp::InitInstance()
 ///////////////////////////////////////////////////////////////////////////////
 int CGalileoApp::ExitInstance()
 {
+	if (g_accessSpecPersistenceReady && !SaveGlobalAccessSpecifications())
+		ErrorMessage("Could not save global access specifications.");
 	delete[]m_pVersionString;
 	delete[]m_pVersionStringWithDebug;
 

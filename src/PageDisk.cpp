@@ -147,6 +147,8 @@ ON_NOTIFY(TVN_SELCHANGING, TTargets, OnSelchangingTTargets)
 END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPageDisk message handlers
+
+
 BOOL CPageDisk::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();

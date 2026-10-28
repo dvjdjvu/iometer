@@ -134,6 +134,8 @@ void CPageDisplay::DoDataExchange(CDataExchange * pDX)
 	//}}AFX_DATA_MAP
 }
 
+
+
 BOOL CPageDisplay::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();

@@ -132,6 +132,8 @@ ON_EN_SETFOCUS(EMaxSends, OnSetfocusEMaxSends)
 END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPageNetwork message handlers
+
+
 BOOL CPageNetwork::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();

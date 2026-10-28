@@ -88,6 +88,7 @@ class CGalileoApp:public CWinApp {
 	CString instantaneous_file;
 
 	const char *GetVersionString(BOOL fWithDebugIndicator = FALSE);
+	BOOL SaveGlobalAccessSpecifications();
 
 	// Is Iometer running in batch mode?
 	BOOL IsBatchMode();

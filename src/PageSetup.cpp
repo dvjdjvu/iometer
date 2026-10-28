@@ -158,6 +158,8 @@ ON_BN_CLICKED(RNetSpawnUser, OnRNetSpawnUser)
 END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPageSetup message handlers
+
+
 BOOL CPageSetup::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();

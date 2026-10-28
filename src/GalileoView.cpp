@@ -316,6 +316,59 @@ CGalileoDoc *CGalileoView::GetDocument()	// non-debug version is inline
 /////////////////////////////////////////////////////////////////////////////
 // CGalileoView message handlers
 
+
+void CGalileoView::LayoutChildren()
+{
+	CRect client;
+	int split;
+	int width;
+	int height;
+
+	if (m_pWorkerView == NULL || m_pPropSheet == NULL ||
+	    !m_pWorkerView->GetSafeHwnd() || !m_pPropSheet->GetSafeHwnd())
+		return;
+
+	GetClientRect(&client);
+	width = client.Width();
+	height = client.Height();
+	if (width <= 0 || height <= 0)
+		return;
+
+	// Keep the topology pane readable while giving the settings pages
+	// the remaining space as the main window is resized.
+	split = width / 3;
+	if (split < 220)
+		split = 220;
+	if (split > 360)
+		split = 360;
+	if (split > width - 250)
+		split = width / 2;
+
+	m_pWorkerView->SetWindowPos(NULL, 5, 8, split - 10,
+				    height - 10, SWP_NOZORDER | SWP_NOACTIVATE);
+	m_pPropSheet->SetWindowPos(NULL, split + 5, 1,
+				   width - split - 6, height - 2,
+				   SWP_NOZORDER | SWP_NOACTIVATE);
+	// Resize the tab body and each modeless property page explicitly.
+	CRect sheetRect;
+	CRect pageRect;
+	CTabCtrl *pTabs = m_pPropSheet->GetTabControl();
+	if (pTabs != NULL) {
+		// Resize the tab control itself; CPropertySheet does not do this
+		// automatically for every modeless child-sheet configuration.
+		m_pPropSheet->GetClientRect(&sheetRect);
+		pTabs->SetWindowPos(NULL, 0, 0, sheetRect.Width(), sheetRect.Height(),
+				    SWP_NOZORDER | SWP_NOACTIVATE);
+		pTabs->GetClientRect(&pageRect);
+		pTabs->AdjustRect(FALSE, &pageRect);
+		pTabs->MapWindowPoints(m_pPropSheet, &pageRect);
+		for (int page = 0; page < m_pPropSheet->GetPageCount(); ++page) {
+			CPropertyPage *pPage = m_pPropSheet->GetPage(page);
+			if (pPage != NULL && pPage->GetSafeHwnd() != NULL)
+				pPage->MoveWindow(&pageRect, FALSE);
+		}
+	}
+}
 BOOL CGalileoView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 			  DWORD dwStyle, const RECT & rect, CWnd * pParentWnd, UINT nID, CCreateContext * pContext)
 {
@@ -363,6 +416,9 @@ BOOL CGalileoView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 	for (int i = SETUP_PAGE; i >= 0; i--) {
 		m_pPropSheet->SetActivePage(i);
 	}
+	int activePage = theApp.GetProfileInt("Window", "ActivePage", DISK_PAGE);
+	if (activePage >= DISK_PAGE && activePage <= SETUP_PAGE)
+		m_pPropSheet->SetActivePage(activePage);
 
 	///////////////////////////////////////////////////////////////////
 	//
@@ -410,8 +466,20 @@ BOOL CGalileoView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 	rect_size.OffsetRect(x - app_center.x, y - app_center.y);
 	pFrame->MoveWindow(&rect_size);
 
+	// Restore the last window size and position saved by the main frame.
+	int savedLeft = theApp.GetProfileInt("Window", "Left", -1);
+	int savedTop = theApp.GetProfileInt("Window", "Top", -1);
+	int savedRight = theApp.GetProfileInt("Window", "Right", -1);
+	int savedBottom = theApp.GetProfileInt("Window", "Bottom", -1);
+	if (savedRight - savedLeft >= 640 && savedBottom - savedTop >= 420) {
+		CRect savedRect(savedLeft, savedTop, savedRight, savedBottom);
+		pFrame->MoveWindow(&savedRect);
+		if (theApp.GetProfileInt("Window", "Maximized", 0))
+			pFrame->ShowWindow(SW_MAXIMIZE);
+	}
 	// Insert the all managers item in the GUI.
 	m_pWorkerView->Initialize();
+	LayoutChildren();	// Ensure the initial client size is applied to all child pages.
 
 	theApp.manager_list.ResetResults(WHOLE_TEST_PERF);
 	theApp.manager_list.ResetResults(LAST_UPDATE_PERF);
@@ -2334,6 +2402,9 @@ TargetType CGalileoView::GetSelectedTargetType()
 //
 void CGalileoView::OnDestroy()
 {
+	if (m_pPropSheet != NULL && m_pPropSheet->GetSafeHwnd())
+		theApp.WriteProfileInt("Window", "ActivePage", m_pPropSheet->GetActiveIndex());
+
 	// If a test is running, stop it!
 	if (theApp.test_state != TestIdle) {
 		// Test was running or drives were being prepared, abort.

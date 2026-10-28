@@ -98,6 +98,13 @@ CWorkerView::CWorkerView(CWnd * pParent /*=NULL*/ )
 	old_label_name = NULL;
 }
 
+
+void CWorkerView::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+	if (m_TWorkers.GetSafeHwnd())
+		m_TWorkers.MoveWindow(3, 16, cx - 6, cy - 19);
+}
 void CWorkerView::DoDataExchange(CDataExchange * pDX)
 {
 	CDialog::DoDataExchange(pDX);
@@ -107,6 +114,7 @@ void CWorkerView::DoDataExchange(CDataExchange * pDX)
 }
 
 BEGIN_MESSAGE_MAP(CWorkerView, CDialog)
+ON_WM_SIZE()
 ON_WM_CONTEXTMENU()
     //{{AFX_MSG_MAP(CWorkerView)
     ON_NOTIFY(TVN_SELCHANGED, TWorkers, OnSelchangedTWorkers)

@@ -91,6 +91,8 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
     BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     //{{AFX_MSG_MAP(CMainFrame)
     ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_WM_CLOSE()
     //}}AFX_MSG_MAP
     END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
@@ -113,8 +115,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	// Disable the maximize button.
-	ModifyStyle(WS_MAXIMIZEBOX, NULL);
 	// Remove the document title from before the application title.
 	ModifyStyle(FWS_ADDTOTITLE, NULL);
 
@@ -173,4 +173,28 @@ LRESULT CMainFrame::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		theApp.pView->m_pPageDisplay->ClearCheckButton();
 	}
 	return CFrameWnd::DefWindowProc(message, wParam, lParam);
+}
+
+void CMainFrame::OnSize(UINT nType, int cx, int cy)
+{
+	CFrameWnd::OnSize(nType, cx, cy);
+	CGalileoView *pView = (CGalileoView *)GetActiveView();
+	if (pView != NULL && pView->GetSafeHwnd() != NULL)
+		 pView->LayoutChildren();
+}
+
+void CMainFrame::OnClose()
+{
+	WINDOWPLACEMENT placement;
+	placement.length = sizeof(WINDOWPLACEMENT);
+	if (GetWindowPlacement(&placement)) {
+		CWinApp *app = AfxGetApp();
+		app->WriteProfileInt("Window", "Left", placement.rcNormalPosition.left);
+		app->WriteProfileInt("Window", "Top", placement.rcNormalPosition.top);
+		app->WriteProfileInt("Window", "Right", placement.rcNormalPosition.right);
+		app->WriteProfileInt("Window", "Bottom", placement.rcNormalPosition.bottom);
+		app->WriteProfileInt("Window", "Maximized",
+			placement.showCmd == SW_SHOWMAXIMIZED);
+	}
+	CFrameWnd::OnClose();
 }

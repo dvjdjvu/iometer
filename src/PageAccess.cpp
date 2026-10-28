@@ -144,12 +144,30 @@ BEGIN_MESSAGE_MAP(CPageAccess, CPropertyPage)
 	ON_NOTIFY(LVN_KEYDOWN, LGlobalAccess, OnKeyDownGlobalAccess)
 	ON_NOTIFY(LVN_KEYDOWN, LAssignedAccess, OnKeyDownAssignedAccess)
     //}}AFX_MSG_MAP
+    ON_WM_SIZE()
 END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPageAccess message handlers
+
+void CPageAccess::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	m_ResizableLayout.Resize(cx, cy);
+	CRect rect;
+	if (m_LAssignedAccess.GetSafeHwnd()) {
+		m_LAssignedAccess.GetClientRect(&rect);
+		m_LAssignedAccess.SetColumnWidth(0, rect.Width());
+	}
+	if (m_LGlobalAccess.GetSafeHwnd()) {
+		m_LGlobalAccess.GetClientRect(&rect);
+		m_LGlobalAccess.SetColumnWidth(0, rect.Width());
+	}
+}
+
 BOOL CPageAccess::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
+	m_ResizableLayout.Capture(this);
 	CRect rect;
 
 	// Create and attach the LED image list to the assigned list control.
@@ -239,6 +257,8 @@ void CPageAccess::OnBNew()
 	// Deletes the spec if editing was cancelled.
 	if (!Edit())
 		Delete();
+	else
+		theApp.SaveGlobalAccessSpecifications();
 
 	// Set the focus to the ListCtrl
 	m_LGlobalAccess.SetFocus();
@@ -249,7 +269,8 @@ void CPageAccess::OnBNew()
 //
 void CPageAccess::OnBEdit()
 {
-	Edit();
+	if (Edit())
+		theApp.SaveGlobalAccessSpecifications();
 	m_LGlobalAccess.SetFocus();
 }
 
@@ -321,6 +342,7 @@ void CPageAccess::Delete()
 	// Update the assigned access specs in case we just deleted one.
 	ShowAssignedAccess();
 	UnlockWindowUpdate();
+	theApp.SaveGlobalAccessSpecifications();
 }
 
 //
@@ -673,7 +695,8 @@ void CPageAccess::SetAssignedButtons(BOOL enable)
 //
 void CPageAccess::OnDblclkLGlobalAccess(NMHDR * pNMHDR, LRESULT * pResult)
 {
-	Edit();
+	if (Edit())
+		theApp.SaveGlobalAccessSpecifications();
 	m_LGlobalAccess.SetFocus();
 
 	*pResult = 0;
@@ -1109,6 +1132,8 @@ void CPageAccess::OnBEditCopy()
 	// Deletes the spec if editing was cancelled.
 	if (!Edit())
 		Delete();
+	else
+		theApp.SaveGlobalAccessSpecifications();
 
 	// Set the focus to the ListCtrl
 	m_LGlobalAccess.SetFocus();

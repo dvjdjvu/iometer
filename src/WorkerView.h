@@ -148,6 +148,7 @@ class CWorkerView:public CDialog {
 	afx_msg void OnEndlabeleditTWorkers(NMHDR * pNMHDR, LRESULT * pResult);
 	afx_msg void OnBegindragTWorkers(NMHDR * pNMHDR, LRESULT * pResult);
 	afx_msg void OnRclickTWorkers(NMHDR * pNMHDR, LRESULT * pResult);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnBeginlabeleditTWorkers(NMHDR * pNMHDR, LRESULT * pResult);
 	//}}AFX_MSG
 	 DECLARE_MESSAGE_MAP()

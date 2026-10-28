@@ -161,6 +161,7 @@ class CGalileoView:public CView {
 	void OnMDisplay(int submenu_id, int menu_item);
 
 	void Reset();
+	void LayoutChildren();
 
 	///////////////////////////////////////////////////////////////////////////
 	// Tab sheets.
