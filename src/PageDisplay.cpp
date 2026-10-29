@@ -111,6 +111,7 @@ CPageDisplay::CPageDisplay():CPropertyPage(CPageDisplay::IDD)
 	delay_table[10] = 0;
 
 	isInstantaneousMode = false;
+	persistentSettingsReady = false;
 }
 
 CPageDisplay::~CPageDisplay()
@@ -210,6 +211,8 @@ void CPageDisplay::Initialize()
 	SetWhichPerf(WHOLE_TEST_PERF);
 
 	Reset();
+	RestorePersistentSettings();
+	persistentSettingsReady = true;
 }
 
 //
@@ -303,6 +306,7 @@ void CPageDisplay::SetResultSource(int manager_index, int worker_index, int sele
 
 	// Updating the rates.
 	Update();
+	SavePersistentSettings();
 }
 
 void CPageDisplay::Update()
@@ -692,7 +696,10 @@ BOOL CPageDisplay::GetDisplayData(Results * results, int result_type, double *re
 UINT CPageDisplay::GetUpdateDelay()
 {
 	// We know that the combo box value will be in the range 0..(NUM_UPDATE_TIMES - 1)
-	return (delay_table[m_CUpdateFrequency.GetCurSel()]);
+	int selection = m_CUpdateFrequency.GetCurSel();
+	if (selection < 0 || selection >= NUM_UPDATE_TIMES)
+		return delay_table[NUM_UPDATE_TIMES - 1];
+	return delay_table[selection];
 }
 
 void CPageDisplay::SetUpdateDelay(UINT new_delay)
@@ -735,6 +742,7 @@ void CPageDisplay::OnSelchangeCUpdateFrequency()
 	{
 		theApp.pView->SetTimer(DISPLAY_TIMER, 0, NULL);
 	}
+	SavePersistentSettings();
 }
 
 // Enables and disables the instantaneous output depending on the check box state.
@@ -751,6 +759,44 @@ void CPageDisplay::OnCRecordLastUpdate()
 	else
 	{
 		m_CRAvgWholeTest.EnableWindow(TRUE);
+	}
+	SavePersistentSettings();
+}
+
+void CPageDisplay::SavePersistentSettings()
+{
+	if (!persistentSettingsReady || !GetSafeHwnd())
+		return;
+
+	theApp.WriteProfileInt("ResultsDisplay", "SettingsSaved", 1);
+	theApp.WriteProfileInt("ResultsDisplay", "RecordLastUpdate", m_CRecordLastUpdate.GetCheck());
+	theApp.WriteProfileInt("ResultsDisplay", "UpdateFrequencySeconds", GetUpdateDelay() / 1000);
+	theApp.WriteProfileInt("ResultsDisplay", "UpdateType", GetWhichPerf());
+	for (int i = 0; i < NUM_STATUS_BARS; ++i) {
+		CString statistic;
+		CString key;
+		GetDlgItem(BResultType1 + i)->GetWindowText(statistic);
+		key.Format("Statistic%d", i);
+		theApp.WriteProfileString("ResultsDisplay", key, statistic);
+	}
+}
+
+void CPageDisplay::RestorePersistentSettings()
+{
+	if (!theApp.GetProfileInt("ResultsDisplay", "SettingsSaved", 0))
+		return;
+
+	m_CRecordLastUpdate.SetCheck(theApp.GetProfileInt("ResultsDisplay", "RecordLastUpdate", 0));
+	OnCRecordLastUpdate();
+	SetWhichPerf(theApp.GetProfileInt("ResultsDisplay", "UpdateType", WHOLE_TEST_PERF));
+	SetUpdateDelay(theApp.GetProfileInt("ResultsDisplay", "UpdateFrequencySeconds", 0));
+
+	for (int i = 0; i < NUM_STATUS_BARS; ++i) {
+		CString key;
+		key.Format("Statistic%d", i);
+		CString statistic = theApp.GetProfileString("ResultsDisplay", key, "");
+		if (!statistic.IsEmpty())
+			SelectStatisticByName(i, statistic);
 	}
 }
 
@@ -881,6 +927,7 @@ void CPageDisplay::OnMDisplay(int submenu_id, int menu_item, int result_code)
 	((CButton *) GetDlgItem(BResultType1 + selected_button))->SetCheck(FALSE);
 
 	Update();
+	SavePersistentSettings();
 }
 
 //
@@ -1269,6 +1316,7 @@ void CPageDisplay::OnRAvgLastUpdate()
 	if (theApp.test_state == TestRecording)
 		theApp.manager_list.UpdateResults(LAST_UPDATE_PERF, IsInstantaneousMode());
 	Update();
+	SavePersistentSettings();
 }
 
 void CPageDisplay::OnRAvgWholeTest()
@@ -1276,4 +1324,5 @@ void CPageDisplay::OnRAvgWholeTest()
 	if (theApp.test_state == TestRecording)
 		theApp.manager_list.UpdateResults(WHOLE_TEST_PERF, IsInstantaneousMode());
 	Update();
+	SavePersistentSettings();
 }

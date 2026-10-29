@@ -159,6 +159,8 @@ class CPageDisplay:public CPropertyPage {
 	void SelectWorkerViewItem(const int bar_number);
 	bool IsInstantaneousMode();
 	void Enable(BOOL enable);
+	void SavePersistentSettings();
+	void RestorePersistentSettings();
 // Dialog Data
 	//{{AFX_DATA(CPageDisplay)
 	enum { IDD = IDD_DISPLAY };
@@ -277,6 +279,7 @@ class CPageDisplay:public CPropertyPage {
 
 	int selected_button;
 	bool isInstantaneousMode;
+	bool persistentSettingsReady;
 
 	UINT delay_table[NUM_UPDATE_TIMES];
 };
