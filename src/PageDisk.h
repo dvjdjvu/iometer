@@ -136,6 +136,7 @@ class CPageDisk:public CPropertyPage {
 	// Generated message map functions
 	//{{AFX_MSG(CPageDisk)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnKillfocusEQueueDepth();
 	afx_msg void OnKillfocusEDiskSize();
 	afx_msg void OnKillfocusEDiskStart();
@@ -159,6 +160,10 @@ public:
 	afx_msg void OnEnChangeEdiskstart();
 
 private:
+	CRect m_InitialTargetsRect;
+	int m_InitialPageHeight;
+	int m_TargetsExtraWidth;
+	BOOL m_TargetLayoutReady;
 	bool m_RepeatingBytesMessageBox_Shown;
 	bool m_PseudoRandomMessageBox_Shown;
 	bool m_FullRandomMessageBox_Shown;
