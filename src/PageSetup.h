@@ -164,6 +164,7 @@ class CPageSetup:public CPropertyPage {
 	// Generated message map functions
 	//{{AFX_MSG(CPageSetup)
 	 virtual BOOL OnInitDialog();
+	afx_msg void OnChangeETestName();
 	afx_msg void OnChangeEDiskWorkerCount();
 	afx_msg void OnChangeENetWorkerCount();
 	afx_msg void OnSelchangeCDStepType();
@@ -180,6 +181,7 @@ class CPageSetup:public CPropertyPage {
 	afx_msg void OnKillfocusERunTimeSeconds();
 	afx_msg void OnKillfocusEDiskWorkerCount();
 	afx_msg void OnKillfocusENetWorkerCount();
+	afx_msg void OnKillfocusETestName();
 	afx_msg void OnKillfocusEWorkerStart();
 	afx_msg void OnKillfocusEWorkerStep();
 	afx_msg void OnSelchangeCResultType();
@@ -191,6 +193,8 @@ class CPageSetup:public CPropertyPage {
 	//}}AFX_MSG
 	 DECLARE_MESSAGE_MAP()
 	void SetStepTypeLabel(int text_id, int step_type);
+	void SavePersistentSettings();
+	void RestorePersistentSettings();
 
       private:
 
@@ -199,6 +203,7 @@ class CPageSetup:public CPropertyPage {
 
 	// Enable/Disable cycling information.
 	void EnableCyclingInfo(Cycling_Info * cycling_info, BOOL enable);
+	bool persistentSettingsReady;
 };
 
 #endif

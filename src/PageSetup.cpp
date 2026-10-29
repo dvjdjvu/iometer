@@ -94,6 +94,7 @@ CPageSetup::CPageSetup():CPropertyPage(CPageSetup::IDD)
 {
 	//{{AFX_DATA_INIT(CPageSetup)
 	//}}AFX_DATA_INIT
+	persistentSettingsReady = false;
 }
 
 CPageSetup::~CPageSetup()
@@ -130,6 +131,7 @@ void CPageSetup::DoDataExchange(CDataExchange * pDX)
 
 BEGIN_MESSAGE_MAP(CPageSetup, CPropertyPage)
     //{{AFX_MSG_MAP(CPageSetup)
+    ON_EN_CHANGE(ETestName, OnChangeETestName)
     ON_EN_CHANGE(EDiskWorkerCount, OnChangeEDiskWorkerCount)
     ON_EN_CHANGE(ENetWorkerCount, OnChangeENetWorkerCount)
     ON_CBN_SELCHANGE(CDStepType, OnSelchangeCDStepType)
@@ -146,6 +148,7 @@ BEGIN_MESSAGE_MAP(CPageSetup, CPropertyPage)
     ON_EN_KILLFOCUS(ERunTimeSeconds, OnKillfocusERunTimeSeconds)
     ON_EN_KILLFOCUS(EDiskWorkerCount, OnKillfocusEDiskWorkerCount)
     ON_EN_KILLFOCUS(ENetWorkerCount, OnKillfocusENetWorkerCount)
+	ON_EN_KILLFOCUS(ETestName, OnKillfocusETestName)
     ON_EN_KILLFOCUS(EWorkerStart, OnKillfocusEWorkerStart)
     ON_EN_KILLFOCUS(EWorkerStep, OnKillfocusEWorkerStep)
     ON_CBN_SELCHANGE(CResultType, OnSelchangeCResultType)
@@ -197,6 +200,8 @@ BOOL CPageSetup::OnInitDialog()
 #endif
 
 	UpdateData(FALSE);
+	RestorePersistentSettings();
+	persistentSettingsReady = true;
 
 	return TRUE;		// return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -770,6 +775,72 @@ void CPageSetup::UpdateData(BOOL save_from_window)
 	}
 }
 
+void CPageSetup::SavePersistentSettings()
+{
+	if (!persistentSettingsReady || !GetSafeHwnd())
+		return;
+
+	theApp.WriteProfileInt("TestSetup", "SettingsSaved", 1);
+	theApp.WriteProfileString("TestSetup", "Description", test_name);
+	theApp.WriteProfileInt("TestSetup", "Hours", hours);
+	theApp.WriteProfileInt("TestSetup", "Minutes", minutes);
+	theApp.WriteProfileInt("TestSetup", "Seconds", seconds);
+	theApp.WriteProfileInt("TestSetup", "RampTime", ramp_time);
+	theApp.WriteProfileInt("TestSetup", "DiskWorkerCount", disk_worker_count);
+	theApp.WriteProfileInt("TestSetup", "ResultType", result_type);
+	theApp.WriteProfileInt("TestSetup", "TestType", test_type);
+
+	theApp.WriteProfileInt("TestSetup", "WorkerStart", worker_cycling.start);
+	theApp.WriteProfileInt("TestSetup", "WorkerStep", worker_cycling.step);
+	theApp.WriteProfileInt("TestSetup", "WorkerStepType", worker_cycling.step_type);
+	theApp.WriteProfileInt("TestSetup", "TargetStart", target_cycling.start);
+	theApp.WriteProfileInt("TestSetup", "TargetStep", target_cycling.step);
+	theApp.WriteProfileInt("TestSetup", "TargetStepType", target_cycling.step_type);
+	theApp.WriteProfileInt("TestSetup", "QueueStart", queue_cycling.start);
+	theApp.WriteProfileInt("TestSetup", "QueueEnd", queue_cycling.end);
+	theApp.WriteProfileInt("TestSetup", "QueueStep", queue_cycling.step);
+	theApp.WriteProfileInt("TestSetup", "QueueStepType", queue_cycling.step_type);
+}
+
+void CPageSetup::RestorePersistentSettings()
+{
+	if (!theApp.GetProfileInt("TestSetup", "SettingsSaved", 0))
+		return;
+
+	test_name = theApp.GetProfileString("TestSetup", "Description", "");
+	hours = theApp.GetProfileInt("TestSetup", "Hours", hours);
+	minutes = theApp.GetProfileInt("TestSetup", "Minutes", minutes);
+	seconds = theApp.GetProfileInt("TestSetup", "Seconds", seconds);
+	ramp_time = theApp.GetProfileInt("TestSetup", "RampTime", ramp_time);
+	disk_worker_count = theApp.GetProfileInt("TestSetup", "DiskWorkerCount", disk_worker_count);
+	result_type = theApp.GetProfileInt("TestSetup", "ResultType", result_type);
+	test_type = theApp.GetProfileInt("TestSetup", "TestType", test_type);
+
+	worker_cycling.start = theApp.GetProfileInt("TestSetup", "WorkerStart", worker_cycling.start);
+	worker_cycling.step = theApp.GetProfileInt("TestSetup", "WorkerStep", worker_cycling.step);
+	worker_cycling.step_type = theApp.GetProfileInt("TestSetup", "WorkerStepType", worker_cycling.step_type);
+	target_cycling.start = theApp.GetProfileInt("TestSetup", "TargetStart", target_cycling.start);
+	target_cycling.step = theApp.GetProfileInt("TestSetup", "TargetStep", target_cycling.step);
+	target_cycling.step_type = theApp.GetProfileInt("TestSetup", "TargetStepType", target_cycling.step_type);
+	queue_cycling.start = theApp.GetProfileInt("TestSetup", "QueueStart", queue_cycling.start);
+	queue_cycling.end = theApp.GetProfileInt("TestSetup", "QueueEnd", queue_cycling.end);
+	queue_cycling.step = theApp.GetProfileInt("TestSetup", "QueueStep", queue_cycling.step);
+	queue_cycling.step_type = theApp.GetProfileInt("TestSetup", "QueueStepType", queue_cycling.step_type);
+
+	if (test_type < 0 || test_type > CyclingQueueTargets)
+		test_type = 0;
+	if (result_type < 0 || result_type > RecordNone)
+		result_type = RecordAll;
+	if (worker_cycling.step_type < StepLinear || worker_cycling.step_type > StepExponential)
+		worker_cycling.step_type = StepLinear;
+	if (target_cycling.step_type < StepLinear || target_cycling.step_type > StepExponential)
+		target_cycling.step_type = StepLinear;
+	if (queue_cycling.step_type < StepLinear || queue_cycling.step_type > StepExponential)
+		queue_cycling.step_type = StepLinear;
+
+	UpdateData(FALSE);
+}
+
 void CPageSetup::CheckData(UINT item_id, int *var, BOOL no_zero)
 {
 	if ((*var == 0) && no_zero) {
@@ -785,6 +856,13 @@ void CPageSetup::OnChangeEDiskWorkerCount()
 	m_EDiskWorkerCount.GetWindowText(buffer);
 	if (!buffer.IsEmpty())
 		disk_worker_count = GetDlgItemInt(EDiskWorkerCount, NULL, FALSE);
+	SavePersistentSettings();
+}
+
+void CPageSetup::OnChangeETestName()
+{
+	GetDlgItemText(ETestName, test_name);
+	SavePersistentSettings();
 }
 
 void CPageSetup::OnChangeENetWorkerCount()
@@ -794,6 +872,7 @@ void CPageSetup::OnChangeENetWorkerCount()
 	m_ENetWorkerCount.GetWindowText(buffer);
 	if (!buffer.IsEmpty())
 		net_worker_count = GetDlgItemInt(ENetWorkerCount, NULL, FALSE);
+	SavePersistentSettings();
 }
 
 //
@@ -813,6 +892,7 @@ void CPageSetup::OnSelchangeCWStepType()
 {
 	worker_cycling.step_type = worker_cycling.step_sel_box.GetCurSel();
 	SetStepTypeLabel(TWorkerStep, worker_cycling.step_type);
+	SavePersistentSettings();
 }
 
 // Disk step type has changed.
@@ -820,6 +900,7 @@ void CPageSetup::OnSelchangeCDStepType()
 {
 	target_cycling.step_type = target_cycling.step_sel_box.GetCurSel();
 	SetStepTypeLabel(TDiskStep, target_cycling.step_type);
+	SavePersistentSettings();
 }
 
 // Queue depth step type has changed.
@@ -827,6 +908,7 @@ void CPageSetup::OnSelchangeCQStepType()
 {
 	queue_cycling.step_type = queue_cycling.step_sel_box.GetCurSel();
 	SetStepTypeLabel(TQueueStep, queue_cycling.step_type);
+	SavePersistentSettings();
 }
 
 // 
@@ -844,6 +926,7 @@ void CPageSetup::Killfocus(int edit_ID, int *value)
 		SetDlgItemInt(edit_ID, *value, FALSE);
 	else
 		*value = GetDlgItemInt(edit_ID);
+	SavePersistentSettings();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -921,6 +1004,7 @@ void CPageSetup::OnKillfocusEWorkerStep()
 void CPageSetup::OnSelchangeCResultType()
 {
 	result_type = m_CResultType.GetCurSel();
+	SavePersistentSettings();
 }
 
 //
@@ -949,28 +1033,39 @@ void CPageSetup::OnSelchangeCTestType()
 	theApp.pView->m_pPageDisk->m_EQueueDepth.EnableWindow(!queue_cycling.selected &&
 							      theApp.manager_list.ManagerCount());
 	theApp.pView->m_pPageDisk->m_EQueueDepth.RedrawWindow();
+	SavePersistentSettings();
 }
 
 void CPageSetup::OnRDiskSpawnCPUs()
 {
 	m_EDiskWorkerCount.EnableWindow(FALSE);
 	disk_worker_count = -1;
+	SavePersistentSettings();
 }
 
 void CPageSetup::OnRDiskSpawnUser()
 {
 	m_EDiskWorkerCount.EnableWindow(TRUE);
 	disk_worker_count = GetDlgItemInt(EDiskWorkerCount, NULL, FALSE);
+	SavePersistentSettings();
 }
 
 void CPageSetup::OnRNetSpawnCPUs()
 {
 	m_ENetWorkerCount.EnableWindow(FALSE);
 	net_worker_count = -1;
+	SavePersistentSettings();
 }
 
 void CPageSetup::OnRNetSpawnUser()
 {
 	m_ENetWorkerCount.EnableWindow(TRUE);
 	net_worker_count = GetDlgItemInt(ENetWorkerCount, NULL, FALSE);
+	SavePersistentSettings();
+}
+
+void CPageSetup::OnKillfocusETestName()
+{
+	GetDlgItemText(ETestName, test_name);
+	SavePersistentSettings();
 }
