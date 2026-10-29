@@ -146,10 +146,17 @@ class CPageNetwork:public CPropertyPage {
 	afx_msg void OnKeydownTTargets(NMHDR * pNMHDR, LRESULT * pResult);
 	afx_msg void OnDblclkTTargets(NMHDR * pNMHDR, LRESULT * pResult);
 	afx_msg void OnSetfocusTTargets(NMHDR * pNMHDR, LRESULT * pResult);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnKillfocusEMaxSends();
 	afx_msg void OnSetfocusEMaxSends();
 	//}}AFX_MSG
 	 DECLARE_MESSAGE_MAP()
+
+private:
+	CRect m_InitialTargetsRect;
+	int m_InitialPageHeight;
+	int m_TargetsExtraWidth;
+	BOOL m_TargetLayoutReady;
 
 };
 

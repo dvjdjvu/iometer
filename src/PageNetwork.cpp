@@ -92,6 +92,9 @@ IMPLEMENT_DYNCREATE(CPageNetwork, CPropertyPage)
 
 CPageNetwork::CPageNetwork():CPropertyPage(CPageNetwork::IDD)
 {
+	m_InitialPageHeight = 0;
+	m_TargetsExtraWidth = 0;
+	m_TargetLayoutReady = FALSE;
 	//{{AFX_DATA_INIT(CPageNetwork)
 	// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -116,6 +119,7 @@ void CPageNetwork::DoDataExchange(CDataExchange * pDX)
 
 BEGIN_MESSAGE_MAP(CPageNetwork, CPropertyPage)
     //{{AFX_MSG_MAP(CPageNetwork)
+    ON_WM_SIZE()
     ON_NOTIFY(NM_CLICK, TTargets, OnClickTTargets)
     ON_BN_CLICKED(CConnectionRate, OnCConnectionRate)
     ON_NOTIFY(UDN_DELTAPOS, SConnectionRate, OnDeltaposSConnectionRate)
@@ -133,6 +137,30 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPageNetwork message handlers
 
+void CPageNetwork::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	if (!m_TargetLayoutReady || !m_TTargets.GetSafeHwnd())
+		return;
+
+	int height = m_InitialTargetsRect.Height() + cy - m_InitialPageHeight;
+	if (height < 40)
+		height = 40;
+	m_TTargets.SetWindowPos(NULL, m_InitialTargetsRect.left, m_InitialTargetsRect.top,
+				m_InitialTargetsRect.Width() + m_TargetsExtraWidth, height,
+				SWP_NOZORDER | SWP_NOACTIVATE);
+
+	// Keep the Targets frame aligned with the property page's right and bottom edges.
+	CWnd *pTargetsFrame = GetDlgItem(IDC_STATIC);
+	if (pTargetsFrame != NULL && pTargetsFrame->GetSafeHwnd()) {
+		CRect frameRect;
+		pTargetsFrame->GetWindowRect(&frameRect);
+		ScreenToClient(&frameRect);
+		pTargetsFrame->SetWindowPos(NULL, frameRect.left, frameRect.top,
+				cx - frameRect.left - 2, cy - frameRect.top - 2,
+				SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+}
 
 BOOL CPageNetwork::OnInitDialog()
 {
@@ -142,6 +170,28 @@ BOOL CPageNetwork::OnInitDialog()
 	m_ImageList.Create(IDB_TARGET_ICONS, TARGET_ICON_SIZE, TARGET_ICON_EXPAND, TARGET_ICON_BGCOLOR);
 	m_TTargets.SetImageList(&m_ImageList, TVSIL_NORMAL);
 	m_TTargets.SetImageList(&m_ImageList, TVSIL_STATE);	// Use the same image list for state images
+	// Widen the network target tree while shifting the settings column to preserve its spacing.
+	CRect targetsRect;
+	m_TTargets.GetWindowRect(&targetsRect);
+	ScreenToClient(&targetsRect);
+	m_InitialTargetsRect = targetsRect;
+	m_TargetsExtraWidth = m_InitialTargetsRect.Width() / 2;
+	for (HWND child = ::GetWindow(GetSafeHwnd(), GW_CHILD); child != NULL;
+	     child = ::GetWindow(child, GW_HWNDNEXT)) {
+		if (child == m_TTargets.GetSafeHwnd())
+			continue;
+		CRect childRect;
+		::GetWindowRect(child, &childRect);
+		ScreenToClient(&childRect);
+		if (childRect.left >= m_InitialTargetsRect.right)
+			::SetWindowPos(child, NULL, childRect.left + m_TargetsExtraWidth,
+					childRect.top, 0, 0,
+					SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	CRect pageRect;
+	GetClientRect(&pageRect);
+	m_InitialPageHeight = pageRect.Height();
+	m_TargetLayoutReady = TRUE;
 
 	// Set the spin control to translate an up click into a positive movement.
 	m_SConnectionRate.SetRange(0, UD_MAXVAL);
