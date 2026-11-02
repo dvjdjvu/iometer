@@ -1,21 +1,8 @@
 
-Iometer project
-===============
-
-The Project Homepage can be found at:
-http://www.iometer.org/
-
-The SourceForge.net Services can be found at:
-http://sourceforge.net/projects/iometer/
-
-To receive notifications about new versions, you can subscribe at:
-http://freshmeat.net/projects/iometer/
-
-The Iometer Users group at LinkedIn can be found at:
-http://www.linkedin.com/groups?home=&gid=2976553
+![iometer](iometer.jpg)
 
 
-Recent Windows UI Improvements (2026)
+Recent Windows UI Improvements (10.2026)
 =====================================
 
 - The main window can be resized and maximized. The Topology pane, property
@@ -35,7 +22,7 @@ Recent Windows UI Improvements (2026)
   count, and cycling options.
 
 
-Недавние улучшения интерфейса Windows (2026)
+Недавние улучшения интерфейса Windows (10.2026)
 ===========================================
 
 - Главное окно можно изменять и разворачивать на весь экран. Панель Topology,
@@ -56,5 +43,17 @@ Recent Windows UI Improvements (2026)
   Worker и параметры cycling.
 
 
+Iometer project
+===============
 
+The Project Homepage can be found at:
+http://www.iometer.org/
 
+The SourceForge.net Services can be found at:
+http://sourceforge.net/projects/iometer/
+
+To receive notifications about new versions, you can subscribe at:
+http://freshmeat.net/projects/iometer/
+
+The Iometer Users group at LinkedIn can be found at:
+http://www.linkedin.com/groups?home=&gid=2976553
